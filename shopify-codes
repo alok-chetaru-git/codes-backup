@@ -1,1 +1,18 @@
+###Add Color Options - Custom Code####
 
+{% assign color_options = product.options_with_values | where: "name", "Color" %}
+
+{% if color_options.size > 0 %}
+  {% for value in color_options[0].values %}
+    {% assign color_handle = value | handleize %}
+    {% assign filename = color_handle | append: '.png' %}  {# or .jpg/.webp based on what you upload #}
+
+    {% assign color_file = filename | file_url %}
+    {% assign color_img = color_file | prepend: 'https:' | split: '?' | first %}
+
+    <div class="color-swatch">
+      <img src="{{ color_img }}" alt="{{ value }}" width="50" height="50" />
+      <span>{{ value }}</span>
+    </div>
+  {% endfor %}
+{% endif %}
