@@ -1,0 +1,78 @@
+##inc/wp-all-import-custom.php
+
+<?php
+$multiple_recipients = array(
+	'developers@webfirm.com.au',
+	'webfirm.dev@gmail.com'
+); 
+// Hook into WP All Import completion
+add_action('pmxi_after_xml_import', 'check_import_status_and_email', 10, 2);
+
+function check_import_status_and_email($import_id, $import) {
+    // Check if import had errors
+    if (!empty($import->errors) || $import->imported == 0) {
+        $subject = 'WP All Import Failed - Import ID: ' . $import_id;
+        $message = "Import failed with the following details:\n\n";
+        $message .= "Import ID: " . $import_id . "\n";
+        $message .= "Errors: " . print_r($import->errors, true) . "\n";
+        $message .= "Records Processed: " . $import->imported . "\n";
+        
+        wp_mail($multiple_recipients, $subject, $message);
+    }
+}
+
+
+// Check import status via cron
+add_action('wp', 'setup_import_monitoring');
+
+function setup_import_monitoring() {
+    if (!wp_next_scheduled('check_import_failures')) {
+        wp_schedule_event(time(), 'hourly', 'check_import_failures');
+    }
+}
+
+add_action('check_import_failures', 'monitor_failed_imports');
+
+function monitor_failed_imports() {
+    global $wpdb;
+    
+    // Query recent failed imports
+    $failed_imports = $wpdb->get_results(
+        "SELECT * FROM {$wpdb->prefix}pmxi_imports 
+         WHERE triggered = 0 AND processing = 0 
+         AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+    );
+    
+    if (!empty($failed_imports)) {
+        $subject = 'WP All Import - Failed Imports Detected';
+        $message = "The following imports failed:\n\n";
+        
+        foreach ($failed_imports as $import) {
+            $message .= "Import ID: " . $import->id . "\n";
+            $message .= "Name: " . $import->name . "\n";
+            $message .= "Created: " . $import->created_at . "\n\n";
+        }
+        
+        wp_mail($multiple_recipients, $subject, $message);
+    }
+}
+
+// Custom logging for import failures
+add_action('pmxi_after_xml_import', 'log_import_results', 10, 2);
+
+function log_import_results($import_id, $import) {
+    $log_file = WP_CONTENT_DIR . '/uploads/import-monitor.log';
+    $timestamp = date('Y-m-d H:i:s');
+    
+    if (!empty($import->errors)) {
+        $log_entry = "[{$timestamp}] FAILED - Import ID: {$import_id}, Errors: " . 
+                     json_encode($import->errors) . "\n";
+        file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        
+        // Send email notification
+        wp_mail($multiple_recipients, 'Import Failed', $log_entry);
+    }
+}
+
+
+
