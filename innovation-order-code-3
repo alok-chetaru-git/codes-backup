@@ -1,0 +1,234 @@
+{%- comment -%}
+SAFE DEFAULTS – prevents preview crashes if variables don’t exist
+{%- endcomment -%}
+{% assign delivery_agreements = delivery_agreements | default: blank %}
+{% assign delivery_method = delivery_method | default: blank %}
+{% assign has_multiple_delivery_methods = has_multiple_delivery_methods | default: false %}
+{% assign consolidated_estimated_delivery_time = consolidated_estimated_delivery_time | default: blank %}
+{% assign has_pending_payment = has_pending_payment | default: false %}
+{% assign buyer_action_required = buyer_action_required | default: false %}
+{% assign requires_shipping = requires_shipping | default: true %}
+
+{%- comment -%}
+Detect Split Cart
+{%- endcomment -%}
+{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq | default: blank %}
+{% if delivery_method_types != blank and delivery_method_types.size > 1 %}
+  {% assign has_split_cart = true %}
+{% else %}
+  {% assign has_split_cart = false %}
+{% endif %}
+
+{%- comment -%}
+Check for inventory status, backorder, homewares
+{%- endcomment -%}
+{% assign has_ready_to_ship = false %}
+{% assign has_made_to_order = false %}
+{% assign has_coming_soon = false %}
+{% assign has_homewares = false %}
+{% assign has_backorder = false %}
+
+{% for line_item in line_items %}
+  {% assign inv_status = line_item.variant.metafields.custom.inventory_status | default: blank %}
+
+  {% if inv_status == "ready_to_ship" %}
+    {% assign has_ready_to_ship = true %}
+  {% endif %}
+  {% if inv_status == "made_to_order" %}
+    {% assign has_made_to_order = true %}
+  {% endif %}
+  {% if inv_status == "coming_soon" %}
+    {% assign has_coming_soon = true %}
+  {% endif %}
+  {% if inv_status == "backorder" or inv_status == "back_order" %}
+    {% assign has_backorder = true %}
+  {% endif %}
+
+  {%- comment -%} Check if product is in Homewares collection {%- endcomment -%}
+  {% for collection in line_item.product.collections %}
+    {% if collection.handle == "homewares" or collection.title contains "Homewares" %}
+      {% assign has_homewares = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{%- comment -%}
+Check if customer is in Melbourne
+{%- endcomment -%}
+{% assign is_melbourne = false %}
+{% if shipping_address.city and shipping_address.city contains "Melbourne" %}
+  {% assign is_melbourne = true %}
+{% endif %}
+
+{%- comment -%}
+Calculate Dates
+{%- endcomment -%}
+{% assign today = "now" | date: "%s" %}
+{% assign three_days = 3 | times: 86400 %}
+{% assign five_days = 5 | times: 86400 %}
+{% assign delivery_start = today | plus: three_days | date: "%d %B" %}
+{% assign delivery_end = today | plus: five_days | date: "%d %B" %}
+
+{%- comment -%}
+16-20 weeks for MTO
+{%- endcomment -%}
+{% assign sixteen_weeks = 16 | times: 7 | times: 86400 %}
+{% assign twenty_weeks = 20 | times: 7 | times: 86400 %}
+{% assign mto_start = today | plus: sixteen_weeks | date: "%d %B %Y" %}
+{% assign mto_end = today | plus: twenty_weeks | date: "%d %B %Y" %}
+
+{%- comment -%}
+EMAIL TITLE
+{%- endcomment -%}
+{% capture email_title %}
+  {% if has_pending_payment %}
+    Thank you for your order!
+  {% else %}
+    Thank you for your purchase!
+  {% endif %}
+{% endcapture %}
+
+{%- comment -%}
+EMAIL BODY
+{%- endcomment -%}
+{% capture email_body %}
+  {% if has_pending_payment %}
+    {% if buyer_action_required %}
+      You'll get a confirmation email after completing your payment.
+    {% else %}
+      Your payment is being processed. You'll get an email when your order is confirmed.
+    {% endif %}
+  {% else %}
+    {% if requires_shipping %}
+      
+      {%- comment -%} MTO {%- endcomment -%}
+      {% if has_made_to_order %}
+        {% case delivery_method %}
+          {% when 'pick-up' %}
+            <p>Thank you for your purchase.</p>
+            <p>Our team will be in touch once your order is ready to be collected.</p>
+            <p><strong>Custom orders are ready to pick up in 16-20 weeks</strong></p>
+            <p>Estimated pickup date: <strong>{{ mto_start }} - {{ mto_end }}</strong></p>
+          {% else %}
+            <p>Thank you for your purchase.</p>
+            <p>Our team will be in touch once your order is ready to be delivered.</p>
+            <p><strong>Custom orders are ready to deliver in 16-20 weeks</strong></p>
+            <p>Estimated delivery date: <strong>{{ mto_start }} - {{ mto_end }}</strong></p>
+        {% endcase %}
+
+      {%- comment -%} Coming Soon {%- endcomment -%}
+      {% elsif has_coming_soon %}
+        {% case delivery_method %}
+          {% when 'pick-up' %}
+            <p>Thank you for your purchase.</p>
+            <p>Our team will be in touch once your order is ready to be collected.</p>
+            <p><strong>Orders are ready to pick up in 16-20 weeks</strong></p>
+            <p>Estimated pickup date: <strong>{{ mto_start }} - {{ mto_end }}</strong></p>
+          {% else %}
+            <p>Thank you for your purchase.</p>
+            <p>Our team will be in touch once your order is ready to be delivered.</p>
+            <p><strong>Orders are ready to deliver in 16-20 weeks</strong></p>
+            <p>Estimated delivery date: <strong>{{ mto_start }} - {{ mto_end }}</strong></p>
+        {% endcase %}
+
+      {%- comment -%} Ready to Ship {%- endcomment -%}
+      {% elsif has_ready_to_ship %}
+
+        {% if has_homewares %}
+          {% case delivery_method %}
+            {% when 'pick-up' %}
+              <p>Thank you for your purchase!</p>
+              <p>Our team will be in touch once your order is ready to be collected.</p>
+              <p><strong>Ready for pick up in 24 hours</strong></p>
+              <p>Estimated time for pickup is <strong>23 hours</strong>.</p>
+
+            {% when 'local' %}
+              {% if is_melbourne %}
+                <p>Thank you for your purchase.</p>
+                <p>You'll receive an email when your order has been shipped.</p>
+                <p><strong>Ready for delivery in Metro Melbourne - 3-5 days</strong></p>
+                <p>Estimated delivery: <strong>{{ delivery_start }} - {{ delivery_end }}</strong></p>
+              {% else %}
+                <p>Hi {{ customer.first_name }}, we're getting your order ready for delivery.</p>
+              {% endif %}
+
+            {% else %}
+              <p>Thank you for your purchase.</p>
+              <p>You'll receive an email when your order has been shipped.</p>
+              <p><strong>Ready for delivery Interstate 5-14 days</strong></p>
+          {% endcase %}
+
+        {% else %}
+          {% case delivery_method %}
+            {% when 'pick-up' %}
+              {% if is_melbourne %}
+                <p>Thank you for your purchase! Our team will be in touch when your order is ready for collection.</p>
+                <p><strong>Ready for pick up in 24 hours</strong></p>
+                <p>Estimated time for pickup is <strong>23 hours</strong>.</p>
+                <p><em>If your order requires fabric protection or assembly, please allow an additional 24 hours.</em></p>
+              {% else %}
+                <p>You'll receive an email when your order is ready for pickup.</p>
+              {% endif %}
+
+            {% when 'local' %}
+              {% if is_melbourne %}
+                <p>Thank you for your purchase. Our team will be in touch to arrange a delivery time with you.</p>
+                <p><strong>Ready for delivery in Metro Melbourne - 3-5 days</strong></p>
+                <p>Estimated delivery: <strong>{{ delivery_start }} - {{ delivery_end }}</strong></p>
+              {% else %}
+                <p>Hi {{ customer.first_name }}, we're getting your order ready for delivery.</p>
+              {% endif %}
+
+            {% else %}
+              <p>Thank you for your purchase.</p>
+              <p>Our team will be in touch to discuss delivery with you.</p>
+              <p><strong>Ready for delivery Interstate 5-14 days</strong></p>
+              <p>You'll receive an email when your order has been shipped.</p>
+          {% endcase %}
+        {% endif %}
+
+      {% elsif has_backorder %}
+        <p>Thank you for your purchase.</p>
+        <p>You'll receive an email when your order is ready to be shipped.</p>
+
+      {% else %}
+        {% case delivery_method %}
+          {% when 'pick-up' %}
+            You'll receive an email when your order is ready for pickup.
+          {% when 'local' %}
+            Hi {{ customer.first_name }}, we're getting your order ready for delivery.
+          {% else %}
+            We're getting your order ready to be shipped. We will notify you when it has been sent.
+        {% endcase %}
+      {% endif %}
+
+      {% if delivery_instructions != blank %}
+        <p><b>Delivery information:</b> {{ delivery_instructions }}</p>
+      {% endif %}
+
+      {% if consolidated_estimated_delivery_time != blank and has_ready_to_ship == false %}
+        {% if has_multiple_delivery_methods %}
+          <h3 class="estimated_delivery__title">Estimated delivery</h3>
+          <p>{{ consolidated_estimated_delivery_time }}</p>
+        {% else %}
+          <p>Estimated delivery <b>{{ consolidated_estimated_delivery_time }}</b></p>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  {% assign gift_card_line_items = line_items | where: "gift_card" | default: blank %}
+  {% assign found_gift_card_with_recipient_email = false %}
+  {% for line_item in gift_card_line_items %}
+    {% if line_item.properties["__shopify_send_gift_card_to_recipient"] and line_item.properties["Recipient email"] %}
+      {% assign found_gift_card_with_recipient_email = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+  {% if found_gift_card_with_recipient_email %}
+    <p>Your gift card recipient will receive an email with their gift card code.</p>
+  {% elsif gift_card_line_items.first %}
+    <p>You'll receive separate emails for any gift cards.</p>
+  {% endif %}
+{% endcapture %}
