@@ -1,0 +1,1198 @@
+{% assign linkedGWP_Flag = true %}
+{% assign linkedGWP_Prod = 'Free Gift Item' %}
+{% assign linkedGWP_Bundle = 'Bandana, Lickmat' %}
+
+{% assign is_crate_bundle = false %}
+{% assign is_crate_bundle_qty = 0 %}
+
+{% assign crate_bundle_titles = "basic-crate-cover-mattress-mattress-cover,quilted-crate-cover-mattress-mattress-cover-crate-blanket,outlet-crate-cover-and-mattress-cover" | split: "," %}
+
+
+<link rel="stylesheet" href="https://cdn.shopify.com/s/files/1/0025/9358/7312/files/libre-barcode-39-inline.css?v=1673343795" type="text/css" media="all">
+<div class="wrapper">
+  <div class="header">
+    <div class="shop-title">
+      <p class="to-uppercase">
+        <img src="https://cdn.shopify.com/s/files/1/0025/9358/7312/files/SH_Logo_Full.jpg?v=1674635067" width="300"  />
+      </p>
+    </div>
+    <div class="order-title">
+      <p style="font-family: 'Libre Barcode 39 Text', cursive; font-size: 80px; text-align: right; margin-bottom: 15px; padding-top: 30px; display: none">*{{ order.order_number }}*</p>
+      <p class="text-align-right">
+        Order {{ order.name }}
+      </p>
+      
+      <p class="text-align-right">
+        {{ order.created_at | date: "%B %e, %Y" }}
+      </p>
+    </div>
+  </div>
+  <div class="customer-addresses">
+    <div class="shipping-address">
+      <p class="subtitle-bold to-uppercase">
+        {% if delivery_method.instructions != blank %}
+          Delivery to
+        {% else %}
+          Ship to
+        {% endif %}
+      </p>
+      <p class="address-detail">
+        {% if shipping_address != blank %}
+          {{ shipping_address.name }}
+          {% if shipping_address.company != blank %}
+            <br>
+            {{ shipping_address.company }}
+          {% endif %}
+          <br>
+          {{ shipping_address.address1 }}
+          {% if shipping_address.address2 != blank %}
+            <br>
+            {{ shipping_address.address2 }}
+          {% endif %}
+          {% if shipping_address.city_province_zip != blank %}
+            <br>
+            {{ shipping_address.city_province_zip }}
+          {% endif %}
+          <br>
+          {{ shipping_address.country }}
+          {% if shipping_address.phone != blank %}
+            <br>
+            {{ shipping_address.phone }}
+          {% endif %}
+        {% else %}
+          No shipping address
+        {% endif %}
+      </p>
+    </div>
+    <div class="billing-address">
+      <p class="subtitle-bold to-uppercase">
+        Bill to
+      </p>
+      <p class="address-detail">
+        {% if billing_address != blank %}
+          {{ billing_address.name }}
+          {% if billing_address.company != blank %}
+            <br>
+            {{ billing_address.company }}
+          {% endif %}
+          <br>
+          {{ billing_address.address1 }}
+          {%  if billing_address.address2 != blank %}
+            <br>
+            {{ billing_address.address2 }}
+          {% endif %}
+          {% if billing_address.city_province_zip != blank %}
+            <br>
+            {{ billing_address.city_province_zip }}
+          {% endif %}
+          <br>
+          {{ billing_address.country }}
+        {% else %}
+          No billing address
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  <hr>
+{% assign bundleTS = '' %}
+{% for line_item in line_items_in_shipment %}
+    {% assign property_size = line_item.properties | size %}
+    {% if property_size > 0 %}
+      {% for p in line_item.properties %}
+        {% if p.first == 'Bundle Number' %}
+            {% assign itemTS = '' %}
+            {% capture itemTS %}{{p.last}},{% endcapture %}
+            {% unless bundleTS contains itemTS %}
+              {% capture bundleTS %}{{bundleTS}}{{itemTS}}{% endcapture %}
+            {% endunless %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+{% endfor %}
+{% assign bundleTS2 = bundleTS | replace_last: ',','' %}
+{% assign bundleTSArr = bundleTS2 | split: ',' %}
+
+  <div class="order-container">
+    <div class="order-container-header">
+      <div class="order-container-header-left-content">
+        <p class="subtitle-bold to-uppercase">
+          Items
+        </p>
+      </div>
+      <div class="order-container-header-right-content">
+        <p class="subtitle-bold to-uppercase">
+          Quantity
+        </p>
+      </div>
+    </div>
+
+    {% comment %}
+    To adjust the size of line item images, change desired_image_size.
+    The other variables make sure your images print at high quality.
+    {% endcomment %}
+    {% assign desired_image_size = 58 %}
+    {% assign resolution_adjusted_size = desired_image_size | times: 300 | divided_by: 72 | ceil %}
+    {% capture effective_image_dimensions %}
+      {{ resolution_adjusted_size }}x{{ resolution_adjusted_size }}
+    {% endcapture %}
+
+
+
+{% assign itemQtyBundleTitle = '' %}
+{% assign itemQtyBundleImg = '' %}
+
+{% assign property_size = 0 %}
+{% comment %}loop bundle{% endcomment %}
+{% for itemTS in bundleTSArr %}
+  {% for line_item in line_items_in_shipment %}
+    {% assign bundleItem = false %}
+    {% assign property_size = line_item.properties | size %}
+    {% if property_size > 0 %}
+      {% for p in line_item.properties %}
+        {% if p.first == 'Bundle Number' and p.last == itemTS %}
+            {% assign bundleItem = true %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% if bundleItem == true %}
+{% comment %}bundle item{% endcomment %}
+{% comment %}start loop item{% endcomment %}
+
+{% assign itemShowVariantSKU = true %}
+{% assign itemType = ''%}
+{% assign property_size = line_item.properties | size %}
+
+{% if property_size > 0 %}
+  {% for p in line_item.properties %}
+    {% unless p.last == blank %}
+      {% if p.first == '_Product Type' %}
+        {% capture itemType %}  - {{ p.last | downcase }}{% endcapture %}
+      {% endif %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
+
+{% if itemType contains 'crate bundle kit' %}
+    <div class="flex-line-item">
+      <div class="flex-line-item-img">
+        {% if line_item.image != blank %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="flex-line-item-description">
+        <p>
+          <span class="line-item-description-line">
+          {{ line_item.title }}
+          </span>   
+          
+          {% assign bundleArrs = "QUILTED CRATE COVER, MATTRESS, MATTRESS COVER" | split: ", " %}
+          {% assign itemColour = '' %}
+          {% assign itemSize = '' %}
+          {% assign itemBlanket = '' %}
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+          {% for p in line_item.properties %}
+            <span class="line-item-description-line">
+            {% unless p.last == blank %}
+              {% if p.first == 'Size' %}
+                {% capture itemSizeVal %}{{ p.last | upcase }}{% endcapture %}
+                {% if itemSizeVal == 'S' %}
+                  {% assign itemSize = 'SMALL' %} 
+                {% elsif itemSizeVal == 'M' %}
+                  {% assign itemSize = 'MEDIUM' %} 
+                {% elsif itemSizeVal == 'L' %}
+                  {% assign itemSize = 'LARGE' %} 
+                {% elsif itemSizeVal == 'XL' %}
+                  {% assign itemSize = 'X-LARGE' %} 
+                {% else %}       
+                  {% assign itemSize = itemSizeVal %}  
+                {% endif %}
+
+              {% endif %}
+              {% if p.first == 'Colour' %}
+                {% capture itemColour %}{{ p.last | upcase }}{% endcapture %}
+              {% endif %}
+              {% if p.first == 'Blanket' %}
+                {% capture itemBlanket %}{{ p.last | upcase }}{% endcapture %}
+              {% endif %}
+
+            {% endunless %}
+            </span>
+          {% endfor %}
+          {% endif %}
+
+          {% for bundleArr in bundleArrs %}
+            <span class="line-item-description-line aaa">
+              {{ itemColour }} - {{ bundleArr | upcase }} - {{ itemSize }}
+            </span>
+          {% endfor %}
+          {% if itemBlanket != '' %}
+            <span class="line-item-description-line bbb">
+              {{ itemColour }} - BLANKET - {{ itemBlanket }}
+            </span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="flex-line-item-quantity">
+        <p class="text-align-right">
+          x {{ line_item.quantity }}
+        </p>
+      </div>
+  </div>    
+{% elsif itemType contains 'quantity-bundle' %}    
+    {% assign itemQtyWord = '' %}
+    {% assign itemQty = '' %}
+    {% assign itemProperty = '' %}
+    {% assign itemCustomImg = '' %}
+    {% for p in line_item.properties %}
+      {% if p.first == '_Bundle Qty' %}
+          {% capture itemQtyWord %}{{ p.last | upcase }}{% endcapture %}
+          {% assign itemQty = line_item.quantity%}
+      {% endif %}
+    {% endfor %}
+    {% if itemQtyBundleTitle == '' %}
+      {% assign itemQtyBundleTitle = line_item.title %}
+      {% if line_item.image != blank %}
+        {% capture itemQtyBundleImg %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endcapture %}  
+      {% endif %}
+    {% endif %}
+
+    {% if itemQtyWord != '' %}
+      {% assign itemCustomImg = '' %}
+      {% for p in line_item.properties %}
+        {% if p.first == '_Image' && itemCustomImg == '' %}
+          {% capture itemCustomImg %}https:{{ p.last | replace ' ', '' | replace ' ', '' | replace ' ', '' | replace ' ', '' }}{% endcapture %}
+        {% endif %}
+      {% endfor %}
+      <div class="flex-line-item">
+        <div class="flex-line-item-img">
+          {% if itemCustomImg != '' %}
+             <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+              <img src="{{ itemCustomImg  }}" style="max-width: {{ desired_image_size }}px; max-height: {{ desired_image_size }}px;">  
+            </div>
+          {% else %}
+            {{itemQtyBundleImg}}
+          {% endif %}
+        </div>
+        <div class="flex-line-item-description">
+          <p>
+            <span class="line-item-description-line">
+              {{itemQtyBundleTitle}}
+            </span>   
+            {% assign property_size = line_item.properties | size %}
+            {% if property_size > 0 %}
+              <span class="line-item-description-line">
+              {% for p in line_item.properties %}
+                {% unless p.last == blank %}
+                  {% assign stringToCheck = p.first %}
+                  {% assign startsWith = '_' %}
+                  {% assign checkArray = stringToCheck | split:startsWith %}
+                  {% if checkArray[0] == blank %}
+                    {% comment %}start with _{% endcomment %}
+                    {% unless p.first == '_Product Type' or p.first == '_Bundle Qty' or p.first == '_Image' %}
+                    {{ p.last }} {% if forloop.last == true %}{% else %} - {% endif %}
+                    {% endunless %}
+                  {% else %}
+                    {% comment %}does not start with _{% endcomment %}
+                    {% unless p.first == 'Bundle Qty' or p.first == 'Bundle Number' or p.first == 'Bundle Name' %}
+                    {{ p.last }} {% if forloop.last == true %}{% else %} - {% endif %}
+                    {% endunless %}
+                  {% endif %}
+                {% endunless %}
+              {% endfor %}
+              </span>
+            {% endif %}
+          </p>  
+        </div> 
+        <div class="flex-line-item-quantity">
+          <p class="text-align-right">
+            x {{itemQtyWord}}
+          </p>
+        </div>
+      </div>  
+    {% endif %}
+{% elsif itemType contains 'crate bundle addons' %}      
+  <div class="flex-line-item">
+      <div class="flex-line-item-img">
+        {% if line_item.image != blank %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="flex-line-item-description">
+        <p>
+
+
+
+          {% assign itemSize = '' %}
+          {% capture itemSizeVal %}{{ line_item.variant_title | upcase }}{% endcapture %}
+          {% if itemSizeVal == 'S' %}
+            {% assign itemSize = 'SMALL' %} 
+          {% elsif itemSizeVal == 'M' %}
+            {% assign itemSize = 'MEDIUM' %} 
+          {% elsif itemSizeVal == 'L' %}
+            {% assign itemSize = 'LARGE' %} 
+          {% elsif itemSizeVal == 'XL' %}
+            {% assign itemSize = 'X-LARGE' %} 
+          {% else %}       
+            {% assign itemSize = itemSizeVal %}  
+          {% endif %}
+          {% if itemSize != '' %}
+            <span class="line-item-description-line">
+              {{ line_item.title }} - {{ itemSize }}
+            </span>  
+          {% else %}   
+            <span class="line-item-description-line">
+              {{ line_item.title }}
+            </span>    
+          {% endif %}
+
+
+        </p>
+      </div>
+      <div class="flex-line-item-quantity">
+        <p class="text-align-right">
+          x {{ line_item.quantity }}
+        </p>
+      </div>
+  </div>   
+  {% else %}
+
+  <div class="flex-line-item">
+    <div class="flex-line-item-img">
+      {% if line_item.image != blank %}
+        <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+          {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+        </div>
+      {% endif %}
+    </div>
+    <div class="flex-line-item-description">
+      <p>
+        
+        {% assign pTitleCode = '' %}
+        {% if line_item.title == 'MATCHING COVER'  %}
+          {% assign itemColour = '' %}
+          {% assign itemSize = '' %}
+          {% assign itemShowVariantSKU = false %}
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+            {% for p in line_item.properties %}
+              <span class="line-item-description-line">
+              {% unless p.last == blank %}
+                {% if p.first == 'Size' %}
+                  {% capture itemSize %}  - {{ p.last }}{% endcapture %}
+                {% endif %}
+                {% if p.first == 'Colour' %}
+                  {% capture itemColour %}{{ p.last }} - {% endcapture %}
+                {% endif %}
+              {% endunless %}
+              </span>
+            {% endfor %}
+          {% endif %}
+
+          <span class="line-item-description-line">
+
+            {% capture pTitleCode %}{{ itemColour }}{{ line_item.title }}{{ itemSize }}{% endcapture %}
+            {{ pTitleCode }}
+          </span>   
+        {% else %}  
+          <span class="line-item-description-line">
+            {% capture pTitleCode %}{{ line_item.title  }}{% endcapture %}
+            {{ pTitleCode }}<br>
+
+
+{% capture CustomProperty %}{% endcapture %}
+{% if property_size > 0 %}
+  {% for p in line_item.properties %}
+    {% if p.first contains '_CustomProperty' %}
+      {% capture CustomProperty %}{{ p.first | replace: '_CustomProperty_', '' }}: {{p.last}}{% endcapture %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+
+            {{CustomProperty}}
+          </span>
+        {% endif %}
+
+        {% if itemShowVariantSKU %}  
+          {% if line_item.variant_title != blank %}
+            {% capture variantCode %} - {{ line_item.variant_title }}{% endcapture %}
+
+            {% assign showVariant = true %}
+
+            {% if pTitleCode contains variantCode %}
+              {% assign showVariant = false %}                 
+            {% endif %}
+
+            {% if line_item.variant_title == 'BUNDLE' %}
+              {% assign showVariant = false %}                 
+            {% endif %}
+
+            {% if showVariant %}
+              <span class="line-item-description-line">
+                {{ line_item.variant_title }}
+              </span>
+            {% endif %}    
+          {% endif %}
+
+          {% if line_item.sku != blank %}
+            {% assign showSKU = false %}
+            {% if showSKU %}
+              <span class="line-item-description-line">
+                {{ line_item.sku }}
+              </span>
+            {% endif %}    
+          {% endif %}
+        {% endif %}  
+
+
+
+
+        {% if itemShowVariantSKU %}  
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+            {% for p in line_item.properties %}
+              <span class="line-item-description-line">
+              {% unless p.last == blank %}
+
+                {% if p.first == 'Bundle Name' and line_item.title contains 'Kit' %}
+                  <div>Bundle: {{ p.last }}</div>
+                {% endif %}
+                
+
+
+
+
+                {% if p.first == 'Size' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Colour' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Blanket' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+
+                {% if p.first == 'Add Personalised Name Patch' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Add Personalised Name Plate' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Custom Patch' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Type'  %}
+                  Type: {{ p.last }}
+                {% endif %}
+              {% endunless %}
+              </span>
+            {% endfor %}
+          {% endif %}
+        {% endif %} 
+
+      </p>
+    </div>
+    <div class="flex-line-item-quantity">
+      <p class="text-align-right">
+        x {{ line_item.quantity }}
+      </p>
+    </div>
+  </div>
+{% endif %}  
+
+{% comment %}end loop item{% endcomment %}
+{% comment %}bundle item{% endcomment %}      
+    {% endif %}     
+  {% endfor %}  
+  <hr>
+{% endfor %}
+{% comment %}loop not bundle{% endcomment %}
+{% for line_item in line_items_in_shipment %}
+  {% assign bundleItem = false %}
+  {% assign property_size = line_item.properties | size %}
+  {% if property_size > 0 %}
+    {% for p in line_item.properties %}
+      {% if p.first == 'Bundle Number'  %}
+        {% assign bundleItem = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}  
+  
+  {% if bundleItem == false %}
+
+{% comment %}normal Item{% endcomment %}
+{% comment %}start loop item{% endcomment %}
+
+{% assign itemShowVariantSKU = true %}
+{% assign itemType = ''%}
+{% assign property_size = line_item.properties | size %}
+
+{% if property_size > 0 %}
+  {% for p in line_item.properties %}
+    {% unless p.last == blank %}
+      {% if p.first == '_Product Type' %}
+        {% capture itemType %}  - {{ p.last | downcase }}{% endcapture %}
+      {% endif %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
+
+{% if itemType contains 'crate bundle kit' %}
+    <div class="flex-line-item">
+      <div class="flex-line-item-img">
+        {% if line_item.image != blank %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="flex-line-item-description">
+        <p>
+          <span class="line-item-description-line">
+          {{ line_item.title }}
+          </span>   
+          
+          {% assign bundleArrs = "QUILTED CRATE COVER, MATTRESS, MATTRESS COVER" | split: ", " %}
+          {% assign itemColour = '' %}
+          {% assign itemSize = '' %}
+          {% assign itemBlanket = '' %}
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+          {% for p in line_item.properties %}
+            <span class="line-item-description-line">
+            {% unless p.last == blank %}
+              {% if p.first == 'Size' %}
+                {% capture itemSizeVal %}{{ p.last | upcase }}{% endcapture %}
+                {% if itemSizeVal == 'S' %}
+                  {% assign itemSize = 'SMALL' %} 
+                {% elsif itemSizeVal == 'M' %}
+                  {% assign itemSize = 'MEDIUM' %} 
+                {% elsif itemSizeVal == 'L' %}
+                  {% assign itemSize = 'LARGE' %} 
+                {% elsif itemSizeVal == 'XL' %}
+                  {% assign itemSize = 'X-LARGE' %} 
+                {% else %}       
+                  {% assign itemSize = itemSizeVal %}  
+                {% endif %}
+
+              {% endif %}
+              {% if p.first == 'Colour' %}
+                {% capture itemColour %}{{ p.last | upcase }}{% endcapture %}
+              {% endif %}
+              {% if p.first == 'Blanket' %}
+                {% capture itemBlanket %}{{ p.last | upcase }}{% endcapture %}
+              {% endif %}
+
+            {% endunless %}
+            </span>
+          {% endfor %}
+          {% endif %}
+
+          {% for bundleArr in bundleArrs %}
+            <span class="line-item-description-line aaa">
+              {{ itemColour }} - {{ bundleArr | upcase }} - {{ itemSize }}
+            </span>
+          {% endfor %}
+          {% if itemBlanket != '' %}
+            <span class="line-item-description-line bbb">
+              {{ itemColour }} - BLANKET - {{ itemBlanket }}
+            </span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="flex-line-item-quantity">
+        <p class="text-align-right">
+          x {{ line_item.quantity }}
+        </p>
+      </div>
+  </div>    
+{% elsif itemType contains 'quantity-bundle' %}    
+    {% assign itemQtyWord = '' %}
+    {% assign itemQty = '' %}
+    {% assign itemProperty = '' %}
+    {% assign itemCustomImg = '' %}
+    {% for p in line_item.properties %}
+      {% if p.first == '_Bundle Qty' %}
+          {% capture itemQtyWord %}{{ p.last | upcase }}{% endcapture %}
+          {% assign itemQty = line_item.quantity%}
+      {% endif %}
+    {% endfor %}
+    {% if itemQtyBundleTitle == '' %}
+      {% assign itemQtyBundleTitle = line_item.title %}
+      {% if line_item.image != blank %}
+        {% capture itemQtyBundleImg %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endcapture %}  
+      {% endif %}
+    {% endif %}
+
+    {% if itemQtyWord != '' %}
+      {% assign itemCustomImg = '' %}
+      {% for p in line_item.properties %}
+        {% if p.first == '_Image' && itemCustomImg == '' %}
+          {% capture itemCustomImg %}https:{{ p.last | replace ' ', '' | replace ' ', '' | replace ' ', '' | replace ' ', '' }}{% endcapture %}
+        {% endif %}
+      {% endfor %}
+      <div class="flex-line-item">
+        <div class="flex-line-item-img">
+          {% if itemCustomImg != '' %}
+             <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+              <img src="{{ itemCustomImg  }}" style="max-width: {{ desired_image_size }}px; max-height: {{ desired_image_size }}px;">  
+            </div>
+          {% else %}
+            {{itemQtyBundleImg}}
+          {% endif %}
+        </div>
+        <div class="flex-line-item-description">
+          <p>
+            <span class="line-item-description-line">
+              {{itemQtyBundleTitle}}
+            </span>   
+            {% assign property_size = line_item.properties | size %}
+            {% if property_size > 0 %}
+              <span class="line-item-description-line">
+              {% for p in line_item.properties %}
+                {% unless p.last == blank %}
+                  {% assign stringToCheck = p.first %}
+                  {% assign startsWith = '_' %}
+                  {% assign checkArray = stringToCheck | split:startsWith %}
+                  {% if checkArray[0] == blank %}
+                    {% comment %}start with _{% endcomment %}
+                    {% unless p.first == '_Product Type' or p.first == '_Bundle Qty' or p.first == '_Image' %}
+                    {{ p.last }} {% if forloop.last == true %}{% else %} - {% endif %}
+                    {% endunless %}
+                  {% else %}
+                    {% comment %}does not start with _{% endcomment %}
+                    {% unless p.first == 'Bundle Qty' or p.first == 'Bundle Number' or p.first == 'Bundle Name' %}
+                    {{ p.last }} {% if forloop.last == true %}{% else %} - {% endif %}
+                    {% endunless %}
+                  {% endif %}
+                {% endunless %}
+              {% endfor %}
+              </span>
+            {% endif %}
+          </p>  
+        </div> 
+        <div class="flex-line-item-quantity">
+          <p class="text-align-right">
+            x {{itemQtyWord}}
+          </p>
+        </div>
+      </div>  
+    {% endif %}
+{% elsif itemType contains 'crate bundle addons' %}      
+  <div class="flex-line-item">
+      <div class="flex-line-item-img">
+        {% if line_item.image != blank %}
+          <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+            {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="flex-line-item-description">
+        <p>
+
+
+
+          {% assign itemSize = '' %}
+          {% capture itemSizeVal %}{{ line_item.variant_title | upcase }}{% endcapture %}
+          {% if itemSizeVal == 'S' %}
+            {% assign itemSize = 'SMALL' %} 
+          {% elsif itemSizeVal == 'M' %}
+            {% assign itemSize = 'MEDIUM' %} 
+          {% elsif itemSizeVal == 'L' %}
+            {% assign itemSize = 'LARGE' %} 
+          {% elsif itemSizeVal == 'XL' %}
+            {% assign itemSize = 'X-LARGE' %} 
+          {% else %}       
+            {% assign itemSize = itemSizeVal %}  
+          {% endif %}
+          {% if itemSize != '' %}
+            <span class="line-item-description-line">
+              {{ line_item.title }} - {{ itemSize }}
+            </span>  
+          {% else %}   
+            <span class="line-item-description-line">
+              {{ line_item.title }}
+            </span>    
+          {% endif %}
+
+
+        </p>
+      </div>
+      <div class="flex-line-item-quantity">
+        <p class="text-align-right">
+          x {{ line_item.quantity }}
+        </p>
+      </div>
+  </div>   
+  {% else %}
+
+  <div class="flex-line-item">
+    <div class="flex-line-item-img">
+      {% if line_item.image != blank %}
+        <div class="aspect-ratio aspect-ratio-square" style="width: {{ desired_image_size }}px; height: {{ desired_image_size }}px;">
+          {{ line_item.image | img_url: effective_image_dimensions | img_tag: '', 'aspect-ratio__content' }}
+        </div>
+      {% endif %}
+    </div>
+    <div class="flex-line-item-description">
+      <p>
+        
+        {% assign pTitleCode = '' %}
+        {% if line_item.title == 'MATCHING COVER'  %}
+          {% assign itemColour = '' %}
+          {% assign itemSize = '' %}
+          {% assign itemShowVariantSKU = false %}
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+            {% for p in line_item.properties %}
+              <span class="line-item-description-line">
+              {% unless p.last == blank %}
+                {% if p.first == 'Size' %}
+                  {% capture itemSize %}  - {{ p.last }}{% endcapture %}
+                {% endif %}
+                {% if p.first == 'Colour' %}
+                  {% capture itemColour %}{{ p.last }} - {% endcapture %}
+                {% endif %}
+              {% endunless %}
+              </span>
+            {% endfor %}
+          {% endif %}
+
+          <span class="line-item-description-line">
+
+            {% capture pTitleCode %}{{ itemColour }}{{ line_item.title }}{{ itemSize }}{% endcapture %}
+            {{ pTitleCode }}
+          </span>   
+        {% else %}  
+          <span class="line-item-description-line">
+            {% capture pTitleCode %}{{ line_item.title  }}{% endcapture %}
+            {{ pTitleCode }}
+
+          </span>
+        {% endif %}
+
+        {% if itemShowVariantSKU %}  
+          {% if line_item.variant_title != blank %}
+            {% capture variantCode %} - {{ line_item.variant_title }}{% endcapture %}
+
+            {% assign showVariant = true %}
+
+            {% if pTitleCode contains variantCode %}
+              {% assign showVariant = false %}                 
+            {% endif %}
+
+            {% if line_item.variant_title == 'BUNDLE' %}
+              {% assign showVariant = false %}                 
+            {% endif %}
+
+            {% if showVariant %}
+              <span class="line-item-description-line">
+                {{ line_item.variant_title }}
+              </span>
+            {% endif %}    
+          {% endif %}
+
+          {% if line_item.sku != blank %}
+            {% assign showSKU = false %}
+            {% if showSKU %}
+              <span class="line-item-description-line">
+                {{ line_item.sku }}
+              </span>
+            {% endif %}    
+          {% endif %}
+        {% endif %}  
+
+
+
+
+        {% if itemShowVariantSKU %}  
+          {% assign property_size = line_item.properties | size %}
+          {% if property_size > 0 %}
+            {% for p in line_item.properties %}
+              <span class="line-item-description-line">
+              {% unless p.last == blank %}
+
+                {% if p.first == 'Bundle Name' and line_item.title contains 'Kit' %}
+                  <div>Bundle: {{ p.last }}</div>
+                {% endif %}
+                
+
+
+
+
+                {% if p.first == 'Size' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Colour' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Blanket' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+
+                {% if p.first == 'Add Personalised Name Patch' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Add Personalised Name Plate' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Custom Patch' %}
+                  {{ p.first }}: {{ p.last }}
+                {% endif %}
+                {% if p.first == 'Type'  %}
+                  Type: {{ p.last }}
+                {% endif %}
+              {% endunless %}
+              </span>
+            {% endfor %}
+          {% endif %}
+        {% endif %} 
+
+      </p>
+    </div>
+    <div class="flex-line-item-quantity">
+      <p class="text-align-right">
+        x {{ line_item.quantity }}
+      </p>
+    </div>
+
+  </div>
+  {%- if line_item.title == linkedGWP_Prod and linkedGWP_Flag -%}    
+    {%- if linkedGWP_Bundle != '' -%}  
+      {% assign variants = line_item.variant_title | split: ' / ' %}
+      {% assign gwpProds = linkedGWP_Bundle | split: ', ' %}
+      {% for gwpProd in gwpProds %}
+        <div class="flex-line-item">
+           <div class="flex-line-item-img"></div> 
+           <div class="flex-line-item-description">
+              <span class="line-item-description-line">
+                {{gwpProd}}<br>{{variants[forloop.index0]}}
+              </span>  
+           </div> 
+           <div class="flex-line-item-quantity">
+              <p class="text-align-right">
+                x 1
+              </p>
+            </div>
+        </div>  
+      {% endfor %}   
+    {%- endif -%}
+
+  {%- endif -%}
+{% endif %}  
+
+{% comment %}end loop item{% endcomment %}
+{% comment %}normal Item{% endcomment %}   
+<hr>
+    
+      {% assign line_item_title_handleize =  line_item.title | handleize %}
+      {% comment %}dev comment for crate bundle {% endcomment %}
+      {% if crate_bundle_titles contains line_item_title_handleize %}
+        {% assign is_crate_bundle = true %}
+        {% assign is_crate_bundle_qty = is_crate_bundle_qty | plus: line_item.quantity %}
+      {% endif %}
+   
+    
+   
+
+  {% endif %} 
+{% endfor %}
+    
+{% if is_crate_bundle == true %}
+    <div class="flex-line-item">
+      <div class="flex-line-item-img">
+
+      </div>
+      <div class="flex-line-item-description">
+        <p>
+          <span class="line-item-description-line">
+            Bonus Mattress Cover
+          </span>  
+          *The bonus mattress cover Print will be selected at random.
+        </p>
+      </div>
+      <div class="flex-line-item-quantity">
+        <p class="text-align-right">x {{is_crate_bundle_qty}}</p>
+      </div>
+  </div> 
+{% endif %} 
+
+
+
+
+
+  
+  </div>
+
+  
+  {% unless includes_all_line_items_in_order %}
+    <hr class="subdued-separator">
+    <p class="missing-line-items-text ">
+      There are other items from your order not included in this shipment.
+    </p>
+  {% endunless %}
+  <hr>
+  {% if order.note != blank %}
+    <div class="notes">
+      <p class="subtitle-bold to-uppercase">
+        Notes
+      </p>
+      <p class="notes-details">
+        {{ order.note }}
+      </p>
+    </div>
+  {% endif %}
+  {% if delivery_method.instructions != blank %}
+    <div class="notes">
+      <p class="subtitle-bold to-uppercase">
+        Delivery instructions
+      </p>
+      <p class="notes-details">
+        {{ delivery_method.instructions }}
+      </p>
+    </div>
+  {% endif %}
+  <div class="footer">
+    <p>
+      We are nothing without you and your furry friend. Thank you for your love and support ❤
+    <p>
+      <strong>
+        {{ shop.name }}
+      </strong>
+      <br>
+      {{ shop_address.address1 }}, {{ shop_address.city }}, {{ shop_address.province_code }}, {{ shop_address.zip }}, {{ shop_address.country }}
+      <br>
+      {{ shop.email }}
+      <br>
+      {{ shop.domain }}
+    </p>
+    <p>
+    </p>
+  </div>
+</div>
+<style type="text/css">
+  body {
+    font-size: 15px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  .wrapper {
+    width: 831px;
+    margin: auto;
+    padding: 4em;
+    font-family: "Noto Sans", sans-serif;
+    font-weight: 250;
+  }
+
+  .header {
+    width: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: row;
+    align-items: top;
+  }
+
+  .header p {
+    margin: 0;
+  }
+
+  .shop-title {
+    -webkit-box-flex: 6;
+    -webkit-flex: 6;
+    flex: 6;
+    font-size: 1.9em;
+  }
+
+  .order-title {
+    -webkit-box-flex: 4;
+    -webkit-flex: 4;
+    flex: 4;
+  }
+
+  .customer-addresses {
+    width: 100%;
+    display: inline-block;
+    margin: 2em 0;
+  }
+
+  .address-detail {
+    margin: 0.7em 0 0;
+    line-height: 1.5;
+  }
+
+  .subtitle-bold {
+    font-weight: bold;
+    margin: 0;
+    font-size: 0.85em;
+  }
+
+  .to-uppercase {
+    text-transform: uppercase;
+  }
+
+  .text-align-right {
+    text-align: right;
+  }
+
+  .shipping-address {
+    float: left;
+    min-width: 18em;
+    max-width: 50%;
+  }
+
+  .billing-address {
+    padding-left: 20em;
+    min-width: 18em;
+  }
+
+  .order-container {
+    padding: 0 0.7em;
+  }
+
+  .order-container-header {
+    display: inline-block;
+    width: 100%;
+    margin-top: 1.4em;
+  }
+
+  .order-container-header-left-content {
+    float: left;
+  }
+
+  .order-container-header-right-content {
+    float: right;
+  }
+
+  .flex-line-item {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 1.4em 0;
+    page-break-inside: avoid;
+  }
+
+  .flex-line-item-img {
+    margin-right: 1.4em;
+    min-width: {{ desired_image_size }}px;
+  }
+
+  .flex-line-item-description {
+    -webkit-box-flex: 7;
+    -webkit-flex: 7;
+    flex: 7;
+  }
+
+  .line-item-description-line {
+    display: block;
+  }
+
+  .flex-line-item-description p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .flex-line-item-quantity {
+    -webkit-box-flex: 3;
+    -webkit-flex: 3;
+    flex: 3;
+  }
+
+  .subdued-separator {
+    height: 0.07em;
+    border: none;
+    color: lightgray;
+    background-color: lightgray;
+    margin: 0;
+  }
+
+  .missing-line-items-text {
+    margin: 1.4em 0;
+    padding: 0 0.7em;
+  }
+
+  .notes {
+    margin-top: 2em;
+  }
+
+  .notes p {
+    margin-bottom: 0;
+  }
+
+  .notes .notes-details {
+    margin-top: 0.7em;
+  }
+
+  .footer {
+    margin-top: 2em;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .footer p {
+    margin: 0;
+    margin-bottom: 1.4em;
+  }
+
+  hr {
+    height: 0.14em;
+    border: none;
+    color: black;
+    background-color: black;
+    margin: 0;
+  }
+
+  .aspect-ratio {
+    position: relative;
+    display: block;
+    background: #fafbfc;
+    padding: 0;
+  }
+
+  .aspect-ratio::before {
+    z-index: 1;
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border: 1px solid rgba(195,207,216,0.3);
+  }
+
+  .aspect-ratio--square {
+    width: 100%;
+    padding-bottom: 100%;
+  }
+
+  .aspect-ratio__content {
+    position: absolute;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+  }
+</style> 
