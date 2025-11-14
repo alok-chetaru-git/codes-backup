@@ -1,3 +1,4 @@
+
 {% assign linkedGWP_Flag = true %}
 {% assign linkedGWP_Prod = 'Free Gift Item' %}
 {% assign linkedGWP_Bundle = 'Bandana, Lickmat' %}
@@ -755,6 +756,7 @@
         {% if line_item.title == 'MATCHING COVER'  %}
           {% assign itemColour = '' %}
           {% assign itemSize = '' %}
+          {% assign itemCustomName = '' %}
           {% assign itemShowVariantSKU = false %}
           {% assign property_size = line_item.properties | size %}
           {% if property_size > 0 %}
@@ -767,21 +769,35 @@
                 {% if p.first == 'Colour' %}
                   {% capture itemColour %}{{ p.last }} - {% endcapture %}
                 {% endif %}
+                {% if p.first == 'Personalised Name' %}
+                    {% capture itemCustomName %}Personalised Name : {{ p.last }}{% endcapture %}
+                {% endif %}
               {% endunless %}
               </span>
             {% endfor %}
           {% endif %}
 
           <span class="line-item-description-line">
-
             {% capture pTitleCode %}{{ itemColour }}{{ line_item.title }}{{ itemSize }}{% endcapture %}
-            {{ pTitleCode }}
+            {{ pTitleCode }}<br/>{{itemCustomName}}
           </span>   
         {% else %}  
           <span class="line-item-description-line">
             {% capture pTitleCode %}{{ line_item.title  }}{% endcapture %}
             {{ pTitleCode }}
-
+            {% assign property_size = line_item.properties | size %}
+            {% if property_size > 0 %}
+              {% for p in line_item.properties %}
+                
+                {% unless p.last == blank %}
+                  {% if p.first == 'Personalised Name' %}
+                   <br/> Personalised Name : {{ p.last }}
+                  {% endif %}
+                {% endunless %}
+               
+              {% endfor %}
+            {% endif %}
+           
           </span>
         {% endif %}
 
