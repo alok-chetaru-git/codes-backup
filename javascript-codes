@@ -1,0 +1,7 @@
+## Debug Horizontal scroll - This detects elements extending beyond the screen (more reliable than scrollWidth).
+
+[...document.querySelectorAll('*')].forEach(el => {
+  if (el.getBoundingClientRect().right > document.documentElement.clientWidth) {
+    console.log(el);
+  }
+});
